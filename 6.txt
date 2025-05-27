@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(const WeatherApp());
+}
+
+class WeatherApp extends StatelessWidget {
+  const WeatherApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Weather App',
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        useMaterial3: true,
+      ),
+      home: const WeatherScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class WeatherScreen extends StatefulWidget {
+  const WeatherScreen({super.key});
+
+  @override
+  State<WeatherScreen> createState() => _WeatherScreenState();
+}
+
+class _WeatherScreenState extends State<WeatherScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  String _temperature = '';
+  String _description = '';
+  String _city = '';
+  String _weatherIcon = '';
+  bool _isLoading = false;
+  String _errorMessage = '';
+  static const String _apiKey = 'c920b6c3110922c1e91bc3f70232e4b9'; // Replace with your actual API key
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _getWeather(String cityName) async {
+    if (cityName.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a city name';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final url = Uri.parse(
+          'https://api.openweathermap.org/data/2.5/weather?q=$cityName&appid=$_apiKey&units=metric');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _temperature = data['main']['temp'].round().toString();
+          _description = data['weather'][0]['description'];
+          _city = data['name'];
+          _weatherIcon = data['weather'][0]['icon'];
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'City not found. Please try again.';
+          _clearWeatherData();
+        });
+      }
+    } on http.ClientException catch (e) {
+      setState(() {
+        _errorMessage = 'Network error: ${e.message}';
+        _clearWeatherData();
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: ${e.toString()}';
+        _clearWeatherData();
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _clearWeatherData() {
+    setState(() {
+      _temperature = '';
+      _description = '';
+      _city = '';
+      _weatherIcon = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Weather App'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              decoration: InputDecoration(
+                labelText: 'Enter city name',
+                hintText: 'e.g. London, New York',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    _focusNode.unfocus();
+                    _getWeather(_controller.text.trim());
+                  },
+                ),
+              ),
+              textInputAction: TextInputAction.search,
+              onSubmitted: (value) => _getWeather(value.trim()),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      _focusNode.unfocus();
+                      _getWeather(_controller.text.trim());
+                    },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Get Weather'),
+            ),
+            const SizedBox(height: 30),
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  _errorMessage,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            if (_city.isNotEmpty)
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      if (_weatherIcon.isNotEmpty)
+                        Image.network(
+                          'https://openweathermap.org/img/wn/${_weatherIcon}@2x.png',
+                          width: 80,
+                          height: 80,
+                        ),
+                      Text(
+                        _city,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '$_temperature°C',
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _description.toUpperCase(),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

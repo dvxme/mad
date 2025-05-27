@@ -1,0 +1,107 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
+
+void main() => runApp(const StopwatchApp());
+
+class StopwatchApp extends StatelessWidget {
+  const StopwatchApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Stopwatch App',
+      home: StopwatchScreen(),
+    );
+  }
+}
+
+class StopwatchScreen extends StatefulWidget {
+  const StopwatchScreen({super.key});
+
+  @override
+  State<StopwatchScreen> createState() => _StopwatchScreenState();
+}
+
+class _StopwatchScreenState extends State<StopwatchScreen> {
+  int _elapsedSeconds = 0;
+  Timer? _timer;
+  bool _isRunning = false;
+
+  void _startTimer() {
+    if (!_isRunning) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _elapsedSeconds++;
+        });
+      });
+      setState(() {
+        _isRunning = true;
+      });
+    }
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    setState(() {
+      _isRunning = false;
+    });
+  }
+
+  void _resetTimer() {
+    _stopTimer();
+    setState(() {
+      _elapsedSeconds = 0;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Simple Stopwatch'),
+        backgroundColor: Colors.teal,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Elapsed Time: $_elapsedSeconds seconds',
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _isRunning ? null : _startTimer,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  child: const Text('Start', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: _isRunning ? _stopTimer : null,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text('Stop', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: _resetTimer,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  child: const Text('Reset', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

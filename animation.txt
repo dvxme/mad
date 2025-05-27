@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const AnimatedLogoApp());
+}
+
+class AnimatedLogoApp extends StatelessWidget {
+  const AnimatedLogoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'College Logo Animation',
+      home: AnimatedLogoScreen(),
+    );
+  }
+}
+
+class AnimatedLogoScreen extends StatefulWidget {
+  const AnimatedLogoScreen({super.key});
+
+  @override
+  State<AnimatedLogoScreen> createState() => _AnimatedLogoScreenState();
+}
+
+class _AnimatedLogoScreenState extends State<AnimatedLogoScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 100, end: 250).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Clean up
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("College Logo Animation")),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            return Container(
+              width: _animation.value,
+              height: _animation.value,
+              child: Image.network('https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg'),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

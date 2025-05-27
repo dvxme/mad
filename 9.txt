@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const EcommerceApp());
+}
+
+class EcommerceApp extends StatelessWidget {
+  const EcommerceApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'E-Commerce App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.teal),
+      home: const ProductListScreen(),
+    );
+  }
+}
+
+class ProductListScreen extends StatelessWidget {
+  const ProductListScreen({super.key});
+
+  final List<Map<String, dynamic>> products = const [
+    {
+      'title': 'Book1',
+      'price': 350,
+      'image': 'https://s2.studylib.net/store/data/025674227_1-0897a2c25e12fdaa680e9cb8e115bf87-768x994.png?text=book1',
+    },
+    {
+      'title': 'Book2',
+      'price': 450,
+      'image': 'https://1.bp.blogspot.com/-_AeVQcJ-PXQ/YWiEuEA9VBI/AAAAAAAALBs/kOiAXuZwGHIpLT4rlg62_ipE077p-d1qACLcBGAsYHQ/s0/new%2Bflutter%2Bimage.png',
+    },
+    {
+      'title': 'Book3',
+      'price': 250,
+      'image': 'https://docs.flutter.dev/assets/images/docs/cover/google-flutter-mobile-development-quick-start-guide.jpg',
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Products')),
+      body: ListView.builder(
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            elevation: 4,
+            child: ListTile(
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  product['image'],
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.broken_image),
+                ),
+              ),
+              title: Text(product['title']),
+              subtitle: Text('\$${product['price']}'),
+              trailing: const Icon(Icons.arrow_forward),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailScreen(product: product),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ProductDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> product;
+
+  const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(product['title'])),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Image.network(
+                  product['image'],
+                  height: 250,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.broken_image, size: 100),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  product['title'],
+                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '\$${product['price']}',
+                  style: const TextStyle(fontSize: 22, color: Colors.teal),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${product['title']} added to cart!')),
+                    );
+                  },
+                  icon: const Icon(Icons.shopping_cart),
+                  label: const Text('Add to Cart'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

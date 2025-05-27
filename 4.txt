@@ -1,0 +1,255 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const CalculatorApp());
+}
+
+class CalculatorApp extends StatelessWidget {
+  const CalculatorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Calculator',
+      theme: ThemeData(primarySwatch: Colors.teal),
+      home: const CalculatorScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class CalculatorScreen extends StatefulWidget {
+  const CalculatorScreen({super.key});
+
+  @override
+  State<CalculatorScreen> createState() => _CalculatorScreenState();
+}
+
+class _CalculatorScreenState extends State<CalculatorScreen> {
+  String _input = '';
+  String _result = '';
+
+  void _buttonPressed(String value) {
+    setState(() {
+      if (value == 'C') {
+        _clear();
+        return;
+      }
+
+      if (value == '=') {
+        _calculateResult();
+        return;
+      }
+
+      // Prevent multiple operators in a row
+      if (['+', '-', '×', '÷'].contains(value) &&
+          _input.isNotEmpty &&
+          ['+', '-', '×', '÷'].contains(_input[_input.length - 1])) {
+        return;
+      }
+
+      _input += value;
+    });
+  }
+
+  void _clear() {
+    setState(() {
+      _input = '';
+      _result = '';
+    });
+  }
+
+  void _calculateResult() {
+    if (_input.isEmpty) return;
+
+    try {
+      String finalInput = _input
+          .replaceAll('×', '*')
+          .replaceAll('÷', '/')
+          .replaceAll(' ', '');
+
+      // Using basic string parsing and evaluation due to package restrictions
+      double eval = _evaluateExpression(finalInput);
+
+      setState(() {
+        _result = '= ${eval.toString().replaceAll('.0', '')}';
+      });
+    } catch (e) {
+      setState(() {
+        _result = 'Error';
+      });
+    }
+  }
+
+  double _evaluateExpression(String expression) {
+    try {
+      // Basic implementation (no precedence)
+      double result = 0;
+      String currentNumber = '';
+      String currentOperator = '+';
+
+      for (int i = 0; i < expression.length; i++) {
+        String char = expression[i];
+
+        if (char == '+' || char == '-' || char == '*' || char == '/') {
+          double number = double.parse(currentNumber);
+          switch (currentOperator) {
+            case '+':
+              result += number;
+              break;
+            case '-':
+              result -= number;
+              break;
+            case '*':
+              result *= number;
+              break;
+            case '/':
+              if (number == 0) {
+                throw Exception("Division by zero");
+              }
+              result /= number;
+              break;
+          }
+          currentNumber = '';
+          currentOperator = char;
+        } else {
+          currentNumber += char;
+        }
+      }
+
+      double number = double.parse(currentNumber);
+      switch (currentOperator) {
+        case '+':
+          result += number;
+          break;
+        case '-':
+          result -= number;
+          break;
+        case '*':
+          result *= number;
+          break;
+        case '/':
+          if (number == 0) {
+            throw Exception("Division by zero");
+          }
+          result /= number;
+          break;
+      }
+      return result;
+    } catch (e) {
+      throw Exception("Invalid expression");
+    }
+  }
+
+  Widget _buildButton(String label, {Color? color, Color? textColor}) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: ElevatedButton(
+          onPressed: () => _buttonPressed(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color ?? Colors.grey[200],
+            foregroundColor: textColor ?? Colors.black,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Calculator'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+            alignment: Alignment.bottomRight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width - 40,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _input,
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _result,
+                      style: TextStyle(
+                        fontSize: 28,
+                        color: Colors.teal[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Row(children: [
+                      _buildButton('7'),
+                      _buildButton('8'),
+                      _buildButton('9'),
+                      _buildButton('÷', color: Colors.orange[700], textColor: Colors.white),
+                    ]),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Row(children: [
+                      _buildButton('4'),
+                      _buildButton('5'),
+                      _buildButton('6'),
+                      _buildButton('×', color: Colors.orange[700], textColor: Colors.white),
+                    ]),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Row(children: [
+                      _buildButton('1'),
+                      _buildButton('2'),
+                      _buildButton('3'),
+                      _buildButton('-', color: Colors.orange[700], textColor: Colors.white),
+                    ]),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Row(children: [
+                      _buildButton('0'),
+                      _buildButton('C', color: Colors.red[400], textColor: Colors.white),
+                      _buildButton('=', color: Colors.green[600], textColor: Colors.white),
+                      _buildButton('+', color: Colors.orange[700], textColor: Colors.white),
+                    ]),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
